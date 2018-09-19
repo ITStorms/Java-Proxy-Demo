@@ -124,8 +124,6 @@ public class ProxyClient {
 
     protected HttpResponse doExecute(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
                                      HttpRequest proxyRequest) throws IOException {
-//        System.out.println("proxy " + servletRequest.getMethod() + " uri: " + servletRequest.getRequestURI() + " -- " +
-//                proxyRequest.getRequestLine().getUri());
         return getHttpClient().execute(targetHost, proxyRequest);
     }
 
@@ -148,7 +146,6 @@ public class ProxyClient {
         Map<String, String[]> params = mRequest.getParameterMap();
         for (String s : params.keySet()) {
             for (String s1 : params.get(s)) {
-                System.out.println(s + " " + s1);
                 multipartEntityBuilder.addTextBody(s,s1, ContentType.TEXT_PLAIN.withCharset("UTF-8"));
             }
         }
@@ -156,9 +153,7 @@ public class ProxyClient {
             List<MultipartFile> multipartFiles =  parts.get(s);
             for (MultipartFile multipartFile : multipartFiles) {
                 multipartEntityBuilder.addBinaryBody(multipartFile.getName(),multipartFile.getBytes());
-                System.out.println(multipartFile.getName());
             }
-
         }
         return multipartEntityBuilder.build();
     }
@@ -209,12 +204,9 @@ public class ProxyClient {
     }
     protected void copyRequestHeaders2(HttpServletRequest clientRequest, HttpRequest proxyRequest)
     {
-        // First clear possibly existing headers, as we are going to copy those from the client request.
-//        proxyRequest.getHeaders().clear();
         for (Header header : proxyRequest.getAllHeaders()) {
             System.out.println(header.getName() + " : " + header.getValue());
         }
-        System.out.println("==========");
         Set<String> headersToRemove = findConnectionHeaders(clientRequest);
 
         for (Enumeration<String> headerNames = clientRequest.getHeaderNames(); headerNames.hasMoreElements();)
@@ -274,6 +266,7 @@ public class ProxyClient {
 
     protected void copyRequestHeader(HttpServletRequest servletRequest, HttpRequest proxyRequest,
                                      String headerName) {
+        //skip copy Content-Type:multipart/form-data;banner:==============
         if(headerName.equalsIgnoreCase(HttpHeaders.CONTENT_TYPE)){
             if(servletRequest.getHeader(headerName).contains("multipart")){
                 return;
@@ -377,7 +370,7 @@ public class ProxyClient {
     }
 
     /**
-     * 重写代理的URL地址
+     * rewriteRequestUrl
      * @param request
      * @return
      */
@@ -396,14 +389,14 @@ public class ProxyClient {
 
 
     /**
-     * 重写返回的URL地址
+     * rewriteResponseUrl
      * @param servletRequest
      * @param theUrl
      * @return
      */
     private String rewriteResponseUrl(HttpServletRequest servletRequest, String theUrl) {
         final String targetUri = this.targetUri;
-        //重定向处理
+        //redirect
         if (theUrl.startsWith(targetUri)) {
             if(StringUtils.isEmpty(proxyUri)){
                 proxyUri = getServerUri(servletRequest);
@@ -416,7 +409,7 @@ public class ProxyClient {
 
     public String getServerUri(HttpServletRequest request) {
         StringBuffer serverUri = new StringBuffer();
-        serverUri.append(request.getScheme());//服务器地址
+        serverUri.append(request.getScheme());//hsot
         serverUri.append(request.getScheme());
         serverUri.append(HTTP_URL_SPLIT_1);
         serverUri.append(request.getServerName());
