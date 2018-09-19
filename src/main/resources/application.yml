@@ -1,5 +1,5 @@
 proxy:
-  target-url: http://localhost:8080
+  target-url: http://localhost/
 
 server:
-  port: 80
+  port: 8080

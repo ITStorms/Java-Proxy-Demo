@@ -15,6 +15,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.*;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.http.HttpHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -50,10 +52,11 @@ public class ProxyClient {
     @Value("${proxy.socket-timeout:-1}")
     private int readTimeout;
 
-    private String proxyUri;
     private CloseableHttpClient httpClient;
     private URI targetUriObj;
     private HttpHost targetHost;
+
+    private Logger log = LoggerFactory.getLogger(this.getClass().getName());
     @PostConstruct
     public void init() throws ServletException {
         initTarget();
@@ -66,7 +69,7 @@ public class ProxyClient {
             try {
                 ((Closeable) httpClient).close();
             } catch (IOException e) {
-                System.out.println("While destroying servlet, shutting down HttpClient");
+                log.info("While destroying servlet, shutting down HttpClient");
             }
         } else {
             //Older releases require we do this:
@@ -124,6 +127,8 @@ public class ProxyClient {
 
     protected HttpResponse doExecute(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
                                      HttpRequest proxyRequest) throws IOException {
+        log.info("proxy:"+servletRequest.getMethod() +" uri: " + servletRequest.getRequestURI() + " -- " ,
+                proxyRequest.getRequestLine().getUri());
         return getHttpClient().execute(targetHost, proxyRequest);
     }
 
@@ -154,6 +159,7 @@ public class ProxyClient {
             for (MultipartFile multipartFile : multipartFiles) {
                 multipartEntityBuilder.addBinaryBody(multipartFile.getName(),multipartFile.getBytes());
             }
+
         }
         return multipartEntityBuilder.build();
     }
@@ -205,7 +211,7 @@ public class ProxyClient {
     protected void copyRequestHeaders2(HttpServletRequest clientRequest, HttpRequest proxyRequest)
     {
         for (Header header : proxyRequest.getAllHeaders()) {
-            System.out.println(header.getName() + " : " + header.getValue());
+            log.info(header.getName() + " : " + header.getValue());
         }
         Set<String> headersToRemove = findConnectionHeaders(clientRequest);
 
@@ -229,7 +235,7 @@ public class ProxyClient {
                 if (headerValue != null)
                     proxyRequest.addHeader(headerName, headerValue);
 
-                System.out.println(headerName+" : " + headerValue);
+                log.info(headerName+" : " + headerValue);
             }
         }
 
@@ -266,7 +272,6 @@ public class ProxyClient {
 
     protected void copyRequestHeader(HttpServletRequest servletRequest, HttpRequest proxyRequest,
                                      String headerName) {
-        //skip copy Content-Type:multipart/form-data;banner:==============
         if(headerName.equalsIgnoreCase(HttpHeaders.CONTENT_TYPE)){
             if(servletRequest.getHeader(headerName).contains("multipart")){
                 return;
@@ -301,9 +306,9 @@ public class ProxyClient {
         if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE) ||
                 headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE2)) {
             copyProxyCookie(servletRequest, servletResponse, headerValue);
-//        } else if (headerName.equalsIgnoreCase(HttpHeaders.LOCATION)) {
-//            // LOCATION Header may have to be rewritten.
-//            servletResponse.addHeader(headerName, rewriteResponseUrl(servletRequest, headerValue));
+        } else if (headerName.equalsIgnoreCase(HttpHeaders.LOCATION)) {
+            // LOCATION Header may have to be rewritten.
+            servletResponse.addHeader(headerName, rewriteResponseUrl(servletRequest, headerValue));
         } else {
             servletResponse.addHeader(headerName, headerValue);
         }
@@ -370,7 +375,7 @@ public class ProxyClient {
     }
 
     /**
-     * rewriteRequestUrl
+     * 重写代理的URL地址
      * @param request
      * @return
      */
@@ -387,35 +392,36 @@ public class ProxyClient {
         return url.toString();
     }
 
-
+    private String proxyUri;
     /**
-     * rewriteResponseUrl
+     * 重写返回的URL地址
      * @param servletRequest
      * @param theUrl
      * @return
      */
     private String rewriteResponseUrl(HttpServletRequest servletRequest, String theUrl) {
+        //重定向处理
         final String targetUri = this.targetUri;
-        //redirect
         if (theUrl.startsWith(targetUri)) {
             if(StringUtils.isEmpty(proxyUri)){
                 proxyUri = getServerUri(servletRequest);
             }
             theUrl = theUrl.replace(targetUri,proxyUri);
         }
+        log.info("redirect: "+theUrl);
         return theUrl;
     }
 
 
     public String getServerUri(HttpServletRequest request) {
         StringBuffer serverUri = new StringBuffer();
-        serverUri.append(request.getScheme());//hsot
         serverUri.append(request.getScheme());
         serverUri.append(HTTP_URL_SPLIT_1);
         serverUri.append(request.getServerName());
         serverUri.append(HTTP_URL_SPLIT_2);
         serverUri.append(request.getServerPort());
         serverUri.append(request.getContextPath());
+        serverUri.append(HTTP_URL_SPLIT_1);
         return serverUri.toString();
     }
 }
