@@ -301,9 +301,9 @@ public class ProxyClient {
         if (headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE) ||
                 headerName.equalsIgnoreCase(org.apache.http.cookie.SM.SET_COOKIE2)) {
             copyProxyCookie(servletRequest, servletResponse, headerValue);
-        } else if (headerName.equalsIgnoreCase(HttpHeaders.LOCATION)) {
-            // LOCATION Header may have to be rewritten.
-            servletResponse.addHeader(headerName, rewriteResponseUrl(servletRequest, headerValue));
+//        } else if (headerName.equalsIgnoreCase(HttpHeaders.LOCATION)) {
+//            // LOCATION Header may have to be rewritten.
+//            servletResponse.addHeader(headerName, rewriteResponseUrl(servletRequest, headerValue));
         } else {
             servletResponse.addHeader(headerName, headerValue);
         }
