@@ -17,19 +17,6 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger -%msg%n</pattern>
         </encoder>
     </appender>
-
-    <!--<appender name="UPLOAD" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
-        <!--<filter class="com.sxito.mis.utils.MyLogbackFilter"/>-->
-        <!--<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
-            <!--<fileNamePattern>${log_dir}/%d{yyyy-MM-dd}/upload-log.log-->
-            <!--</fileNamePattern>-->
-            <!--<maxHistory>${maxHistory}</maxHistory>-->
-        <!--</rollingPolicy>-->
-        <!--<encoder>-->
-            <!--<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>-->
-        <!--</encoder>-->
-    <!--</appender>-->
-
     <!-- ERROR级别日志 -->
     <!-- 滚动记录文件，先将日志记录到指定文件，当符合某个条件时，将日志记录到其他文件 RollingFileAppender-->
     <appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -99,14 +86,6 @@
         </encoder>
     </appender>
 
-
-
-
-
-
-
-
-
     <logger name="java.sql.PreparedStatement" value="DEBUG" />
     <logger name="java.sql.Connection" value="DEBUG" />
     <logger name="java.sql.Statement" value="DEBUG" />
@@ -121,8 +100,6 @@
     <root level="info">
         <!-- 控制台输出 -->
         <appender-ref ref="STDOUT" />
-        <!-- 文件输出 -->
-        <!--<appender-ref ref="UPLOAD" />-->
         <appender-ref ref="ERROR" />
         <appender-ref ref="INFO" />
         <appender-ref ref="WARN" />
